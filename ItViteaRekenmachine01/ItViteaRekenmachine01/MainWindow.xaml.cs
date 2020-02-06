@@ -12,6 +12,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Reflection;
+using Microsoft.CSharp;
+using System.CodeDom.Compiler;
 
 namespace ItViteaRekenmachine01
 {
@@ -20,84 +23,116 @@ namespace ItViteaRekenmachine01
     /// </summary>
     public partial class MainWindow : Window
     {
-        //Variables to hold numbers.
-        Int32 intA, intB, intResult;
-        string strInputA, strInputB, strEquation;
+        /*Todo:
+        - Check if string is empty before attempting to compile.
+        - Make clear buttons + delete button functional.
+        - Make helper stringbuilder method to convert math buttons input into readable code to put into the compiler.
+        - Euro, Procent en Decimal buttons.
+            
+            */
+        //Declaring Variables.
+        string strCalculation, strDisplayTop, strDisplayBtm;
+        bool boolAns;
+
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        private void Button_ClickMath(object sender, RoutedEventArgs e)
+        //Buttton methods
+        private void Button_Click(object sender, RoutedEventArgs e)
         {
-            Button sendButton = e.Source as Button;
-            toNumber(strInputA);
-            Display.Content += " " + sendButton.Content.ToString() + " ";
-            strEquation = sendButton.Content.ToString();
-            strInputA = "";
-        }
 
-        private void Button_ClickResult(object sender, RoutedEventArgs e)
-        {
-            Button sendButton = e.Source as Button;
-            toNumber(strInputA);
-            doEquation(strEquation);
-            Display.Content += " " + sendButton.Content.ToString() + " " + intResult;
         }
-
         private void Button_ClickNumber(object sender, RoutedEventArgs e)
         {
             Button sendButton = e.Source as Button;
-            strInputA += sendButton.Content.ToString();
-            Display.Content += sendButton.Content.ToString();
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            //Button sendButton = e.Source as Button;
-            //strInput += addNumber(sendButton.Content.ToString());
-            
-        }
-
-       /* public string addNumber(string num)
-        {
-            return num;
-        }*/
-        public void toNumber(string strNum)
-        {
-            if (String.IsNullOrEmpty(strNum))
+            if (boolAns)
             {
-
+                strCalculation = "";
+                strDisplayTop = "";
+                boolAns = false;
             }
-            else
+            strCalculation += sendButton.Content.ToString();
+            strDisplayTop += sendButton.Content.ToString();
+            DisplayTop.Content = strDisplayTop;
+        }
+        private void Button_ClickMath(object sender, RoutedEventArgs e)
+        {
+            Button sendButton = e.Source as Button;
+            if (boolAns)
             {
-                try
+                strCalculation = strDisplayBtm;
+                strDisplayTop = strDisplayBtm;
+                boolAns = false;
+            }
+            strCalculation += sendButton.Content.ToString();
+            strDisplayTop += sendButton.Content.ToString();
+            DisplayTop.Content = strDisplayTop;
+        }
+        private void Button_ClickResult(object sender, RoutedEventArgs e)
+        {
+            Button sendButton = e.Source as Button;
+            strDisplayBtm = Compiler(strCalculation);
+            DisplayBtm.Content = strDisplayBtm;
+            boolAns = true;
+        }
+
+        private void Button_ClickAns(object sender, RoutedEventArgs e)
+        {
+            if (boolAns)
+            {
+                strCalculation = strDisplayBtm;
+                strDisplayTop = strDisplayBtm;
+                boolAns = false;
+                DisplayTop.Content = strDisplayTop;
+            }
+        }
+
+
+
+        //Compiler Methods
+        public string Compiler(string str)
+        {
+            string strReturn;
+            CSharpCodeProvider codeProvider = new CSharpCodeProvider();
+
+            CompilerParameters compParams = new CompilerParameters
+            {
+                GenerateInMemory = true,
+                GenerateExecutable = false
+            };
+
+            CompilerResults results = codeProvider.CompileAssemblyFromSource(compParams, stringToCode(str));
+
+            if (results.Errors.Count != 0)
+                throw new Exception("Compiling failed!");
+
+            object objA = results.CompiledAssembly.CreateInstance("Base.MathConverter");
+            MethodInfo metInfo = objA.GetType().GetMethod("ReturnCalculation");
+            object objB = metInfo.Invoke(objA, null);
+            strReturn= objB.ToString();
+            return strReturn;
+        }
+
+        public string stringToCode(string str)
+        {
+            string strBase =
+                @"
+            namespace Base
+            {
+                public class MathConverter
                 {
-                    intA = Int32.Parse(strNum);
+                    public int ReturnCalculation()
+                    {
+                        int intTemp = Placeholder;
+                        return intTemp;
+                    }
                 }
-                catch
-                { }
             }
-        }
-
-        public void doEquation(string strInput)
-        {
-            if (strInput == "+")
-            {
-                intResult = intA + intB;
-            }
-            else if (strInput == "-")
-            {
-                intResult = intA - intB;
-            }
-            else if (strInput == "&#xd7;")
-            {
-                intResult = intA * intB;
-            }
-            else if (strInput == "&#xf7;")
-            {
-                intResult = intA / intB;
-            }
+                        ";
+            //Put actual calculation string in place of Placeholder.
+            return strBase.Replace("Placeholder", str);
         }
     }
 }
