@@ -56,33 +56,33 @@
         <Button x:Name="ButtonClear" Content="C"         Grid.Row="2"  Click="Button_Click" Grid.Column="1"  Style="{DynamicResource ButtonStyle}"/>
         <Button x:Name="ButtonUndo" Content="&#x232b;"   Grid.Row="2"  Click="Button_Click" Grid.Column="2" Style="{DynamicResource ButtonSymbolsStyle}" Grid.ColumnSpan="2"/>
 
-        <Button x:Name="ButtonBracketL" Content="("      Grid.Row="3"  Click="Button_Click" Style="{DynamicResource ButtonStyle}" />
-        <Button x:Name="ButtonBracketR" Content=")"      Grid.Row="3"  Click="Button_Click" Grid.Column="1"  Style="{DynamicResource ButtonStyle}" />
-        <Button x:Name="ButtonEuro" Content="€"          Grid.Row="3"  Click="Button_Click" Grid.Column="2" Style="{DynamicResource ButtonStyle}" />
-        <Button x:Name="ButtonPerc" Content="%"          Grid.Row="3"  Click="Button_Click" Grid.Column="3" Style="{DynamicResource ButtonSymbolsStyle}"/>
+        <Button x:Name="ButtonBracketL" Content="("      Grid.Row="3"  Click="Button_ClickNumber" Style="{DynamicResource ButtonStyle}" />
+        <Button x:Name="ButtonBracketR" Content=")"      Grid.Row="3"  Click="Button_ClickNumber" Grid.Column="1"  Style="{DynamicResource ButtonStyle}" />
+        <Button x:Name="ButtonEuro" Content="€"          Grid.Row="3"  Click="Button_ClickEuro" Grid.Column="2" Style="{DynamicResource ButtonStyle}" />
+        <Button x:Name="ButtonPerc" Content="%"          Grid.Row="3"  Click="Button_ClickPerc" Grid.Column="3" Style="{DynamicResource ButtonSymbolsStyle}"/>
 
         <Button x:Name="ButtonNegative" Content="+/-"    Grid.Row="4"  Click="Button_Click" Style="{DynamicResource ButtonStyle}" />
         <Button x:Name="ButtonSqr" Content="x&#178;"     Grid.Row="4"  Click="Button_Click" Grid.Column="1"  Style="{DynamicResource ButtonStyle}" />
         <Button x:Name="ButtonRoot" Content="&#x221A;"   Grid.Row="4"  Click="Button_Click" Grid.Column="2" Style="{DynamicResource ButtonSymbolsStyle}" />
-        <Button x:Name="ButtonDivide" Content="&#xf7;"   Grid.Row="4"  Click="Button_Click" Grid.Column="3" Style="{DynamicResource ButtonSymbolsStyle}" />
+        <Button x:Name="ButtonDivide" Content="&#xf7;"   Grid.Row="4"  Click="Button_ClickDiv" Grid.Column="3" Style="{DynamicResource ButtonSymbolsStyle}" />
 
 
         <Button x:Name="Button7" Content="7"            Grid.Row="5"  Click="Button_ClickNumber" Style="{DynamicResource ButtonStyle}"/>
         <Button x:Name="Button8" Content="8"            Grid.Row="5"  Click="Button_ClickNumber" Grid.Column="1" Style="{DynamicResource ButtonStyle}" />
         <Button x:Name="Button9" Content="9"            Grid.Row="5"  Click="Button_ClickNumber" Grid.Column="2" Style="{DynamicResource ButtonStyle}" />
-        <Button x:Name="ButtonMulti" Content="&#xd7;"   Grid.Row="5"  Click="Button_Click"       Grid.Column="3" Style="{DynamicResource ButtonSymbolsStyle}" />
+        <Button x:Name="ButtonMulti" Content="&#xd7;"   Grid.Row="5"  Click="Button_ClickMulti"  Grid.Column="3" Style="{DynamicResource ButtonSymbolsStyle}" />
 
         <Button x:Name="Button4" Content="4"       Grid.Row="6"  Click="Button_ClickNumber" Style="{DynamicResource ButtonStyle}" />
         <Button x:Name="Button5" Content="5"       Grid.Row="6"  Click="Button_ClickNumber" Grid.Column="1" Style="{DynamicResource ButtonStyle}" />
         <Button x:Name="Button6" Content="6"       Grid.Row="6"  Click="Button_ClickNumber" Grid.Column="2" Style="{DynamicResource ButtonStyle}" />
-        <Button x:Name="ButtonSubtr" Content="-"   Grid.Row="6"  Click="Button_Click"       Grid.Column="3" Style="{DynamicResource ButtonSymbolsStyle}" />
+        <Button x:Name="ButtonSubtr" Content="-"   Grid.Row="6"  Click="Button_ClickMath"       Grid.Column="3" Style="{DynamicResource ButtonSymbolsStyle}" />
 
         <Button x:Name="Button1" Content="1"      Grid.Row="7"  Click="Button_ClickNumber" Style="{DynamicResource ButtonStyle}" />
         <Button x:Name="Button2" Content="2"      Grid.Row="7"  Click="Button_ClickNumber"  Grid.Column="1" Style="{DynamicResource ButtonStyle}"/>
         <Button x:Name="Button3" Content="3"      Grid.Row="7"  Click="Button_ClickNumber" Grid.Column="2" Style="{DynamicResource ButtonStyle}"/>
         <Button x:Name="ButtonAdd" Content="+"    Grid.Row="7"  Click="Button_ClickMath"   Grid.Column="3" Style="{DynamicResource ButtonSymbolsStyle}" />
 
-        <Button x:Name="ButtonDot" Content=","    Grid.Row="8"  Click="Button_Click"       Style="{DynamicResource ButtonSymbolsStyle}" />
+        <Button x:Name="ButtonDot" Content=","    Grid.Row="8"  Click="Button_ClickDot"       Style="{DynamicResource ButtonSymbolsStyle}" />
         <Button x:Name="Button0" Content="0"      Grid.Row="8"  Click="Button_ClickNumber" Grid.Column="1" Style="{DynamicResource ButtonStyle}" />
         <Button x:Name="ButtonAns" Content="Ans"  Grid.Row="8"  Click="Button_ClickAns"       Grid.Column="2" Style="{DynamicResource ButtonStyle}" />
         <Button x:Name="ButtonEquals" Content="=" Grid.Row="8"  Click="Button_ClickResult" Grid.Column="3" Style="{DynamicResource ButtonSymbolsStyle}" />
