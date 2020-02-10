@@ -24,16 +24,36 @@ namespace ItViteaRekenmachine01
     public partial class MainWindow : Window
     {
         /*Todo:
-        - Check if string is empty before attempting to compile.
-        - Make clear buttons + delete button functional.
-        - Make helper stringbuilder method to convert math buttons input into readable code to put into the compiler. [In progress]
+        - Check if string is empty before attempting to compile. [Done]
+        - Make clear buttons + delete button functional. [Done]
+        - Make Sqrt and Pow work. [Done]
         - Euro, Procent en Decimal buttons. [Done]
+        - Make +/- button work. [Done]
+
+        - Fix undo button. (It messes up when attempting to undo one char whilst Percent, Pow and Sqrt add longer strings.)
+        - Have try-catch methods for faulty input by user. (e.g. Dividing by zero, Straight up faulty syntax, etc.)
         - Clean-up code. Limit amount of different methods, try streamline process.
+
+        - Suggested changes.
+            - Make Sqrt, Pow and Perc strings be included AFTER = is pressed. Using singular 1 char symbols in base string. (So Undo will work.)
+            And replacing said symbols before putting the string into the compiler.
+            Would also make the boolSqrtActive way of solving the bracket issue with using math.sqrt obsolete, cleaning up code in the process.
+
+            - Find a way to condense and simplify the amount of button methods?
+            Make multiple buttons hook up to one button method. And have that method send the buttonname? To a switch method who changes the variables put in depending on the button name.
+            Reducing the amount of repeat code. (Button sendbutton, addToStrAndDisplay, checkAns, sqrtActive, Checkdouble.)
+
+            - Streamline enums and equation types. 
+            Either remove enums altogether and work with a single bool to switch between int and double.
+            Or use the enum equation types and the switch, to switch between variable types depending on the size of the calculation.
+            The enums don't seem to be needed, nor the switch. (As only two options are used.) So likely remove this altogether.
+            
+            
             
             */
         //Declaring Variables.
-        string strCalculation, strDisplayTop, strDisplayBtm;
-        bool boolAns, boolEuro = false;
+        string strCalculation, strDisplayTop, strDisplayBtm, strAns;
+        bool boolAns, boolClear, boolEuro = false, boolSqrtActive;
 
         public MainWindow()
         {
@@ -50,8 +70,7 @@ namespace ItViteaRekenmachine01
             Button sendButton = e.Source as Button;
             if (boolAns)
             {
-                strCalculation = "";
-                strDisplayTop = "";
+                clear();
                 boolAns = false;
             }
             addToStrAndDisplay(sendButton.Content.ToString());
@@ -60,23 +79,26 @@ namespace ItViteaRekenmachine01
         {
             Button sendButton = e.Source as Button;
             checkAns();
+            sqrtActive();
             addToStrAndDisplay(sendButton.Content.ToString());
         }
    
         private void Button_ClickAns(object sender, RoutedEventArgs e)
         {
-            checkAns();
+            addToStrAndDisplay(strAns);
         }
         private void Button_ClickMulti(object sender, RoutedEventArgs e)
         {
             Button sendButton = e.Source as Button;
             checkAns();
+            sqrtActive();
             addToStrAndDisplay("*", sendButton.Content.ToString());
         }
         private void Button_ClickDiv(object sender, RoutedEventArgs e)
         {
             Button sendButton = e.Source as Button;
             checkAns();
+            sqrtActive();
             calculationVarType(equationTypes.Double);
             addToStrAndDisplay("/", sendButton.Content.ToString());
         }
@@ -89,16 +111,51 @@ namespace ItViteaRekenmachine01
         }
         private void Button_ClickEuro(object sender, RoutedEventArgs e)
         {
-            Button sendButton = e.Source as Button;
-            if (boolAns)
+            if (boolEuro)
             {
-                strCalculation = "";
-                strDisplayTop = "";
-                boolAns = false;
+                DisplayEur.Opacity = 0;
+                boolEuro = false;
             }
-            boolEuro = true;
+            else
+            {
+                DisplayEur.Opacity = 0.9;
+                boolEuro = true;
+                calculationVarType(equationTypes.Double);
+            }
+            //addToStrAndDisplay("", sendButton.Content.ToString());
+        }
+        private void Button_Neg(object sender, RoutedEventArgs e)
+        {
+            if (String.IsNullOrEmpty(strAns)) { }
+            else
+            {
+                needsDouble();
+                strAns += "*-1";
+                strAns = Compiler(strAns);
+                if (boolEuro)
+                    strDisplayBtm = String.Format("{0:C2}", Convert.ToDouble(strAns));
+                else
+                    strDisplayBtm = strAns;
+                DisplayBtm.Content = strDisplayBtm;
+                boolAns = true;
+            }
+        }
+        private void Button_Pow(object sender, RoutedEventArgs e)
+        {
+            Button sendButton = e.Source as Button;
+            checkAns();
+            sqrtActive();
             calculationVarType(equationTypes.Double);
-            addToStrAndDisplay("", sendButton.Content.ToString());
+            addToStrAndDisplay(equationPowerBuild(), sendButton.Content.ToString().Substring(1));
+        }
+        private void Button_Root(object sender, RoutedEventArgs e)
+        {
+            Button sendButton = e.Source as Button;
+            checkAns();
+            sqrtActive();
+            calculationVarType(equationTypes.Double);
+            addToStrAndDisplay("Math.Sqrt((Y)", sendButton.Content.ToString());
+            boolSqrtActive = true;
         }
         private void Button_ClickDot(object sender, RoutedEventArgs e)
         {
@@ -106,27 +163,56 @@ namespace ItViteaRekenmachine01
             checkAns();
             addToStrAndDisplay(".", sendButton.Content.ToString());
         }
+        private void Button_Clear(object sender, RoutedEventArgs e)
+        {
+            clear();
+        }
+        private void Button_ClearAll(object sender, RoutedEventArgs e)
+        {
+            clear();
+            strDisplayBtm = "";
+            strAns = "";
+            boolAns = false;
+            DisplayBtm.Content = strDisplayBtm;
+        }
+        private void Button_Undo(object sender, RoutedEventArgs e)
+        {
+            if (String.IsNullOrEmpty(strCalculation)) { }
+            else
+            { 
+                int intTemp = (strCalculation.Length) - 1;
+                strCalculation = strCalculation.Remove(intTemp);
+                intTemp = (strDisplayTop.Length) - 1;
+                strDisplayTop  = strDisplayTop.Remove(intTemp);
+                DisplayTop.Content = strDisplayTop;
+            }
+        }
+
         private void Button_ClickResult(object sender, RoutedEventArgs e)
         {
-            Button sendButton = e.Source as Button;
-            needsDouble();
-            strDisplayBtm = Compiler(strCalculation);
-            if (boolEuro)
-                strDisplayBtm = String.Format("{0:C2}", Convert.ToDouble(strDisplayBtm));
-            DisplayBtm.Content = strDisplayBtm;
-            boolAns = true;
+            if (String.IsNullOrEmpty(strCalculation)) { }
+            else
+            {
+                needsDouble();
+                sqrtActive();
+                strAns = Compiler(strCalculation);
+                if (boolEuro)
+                    strDisplayBtm = String.Format("{0:C2}", Convert.ToDouble(strAns));
+                else
+                    strDisplayBtm = strAns;
+                DisplayBtm.Content = strDisplayBtm;
+                boolAns = true;
+            }
         }
         
-
-
 
         //Button support methods.
         private void checkAns()
         {
             if (boolAns)
             {
-                strCalculation = strDisplayBtm;
-                strDisplayTop = strDisplayBtm;
+                strCalculation = strAns;
+                strDisplayTop = strAns;
                 boolAns = false;
                 DisplayTop.Content = strDisplayTop;
             }
@@ -150,8 +236,21 @@ namespace ItViteaRekenmachine01
                 calculationVarType(equationTypes.Double);
             }
         }
-
-
+        private void sqrtActive()
+        {
+            if (boolSqrtActive)
+            {
+                strCalculation += ")";
+                boolSqrtActive = false;
+            }
+        }
+        private void clear()
+        {
+            strCalculation = "";
+            strDisplayTop = "";
+            boolClear = true;
+            DisplayTop.Content = strDisplayTop;
+        }
 
         //Compiler Methods
         public string Compiler(string str)
@@ -176,10 +275,17 @@ namespace ItViteaRekenmachine01
             strReturn= objB.ToString();
             return strReturn;
         }
+ 
         
+
+
+
+
+
+
         //String formatting/building methods.
         //Variables for string building.
-        string strVarX = "int", strVarY ="", strSymbols = "+-*/";
+        string strVarX = "int", strVarY ="", strSymbols = "+-*/()";
 
        
 
@@ -190,6 +296,14 @@ namespace ItViteaRekenmachine01
             string strTemp = strCalculation.Substring(intTemp);
             strCalculation = strCalculation.Remove(intTemp);
             return string.Format("((Y){0} / (Y)100)", strTemp);
+        }
+        private string equationPowerBuild()
+        {
+            char[] chrSymbols = strSymbols.ToCharArray();
+            int intTemp = (strCalculation.LastIndexOfAny(chrSymbols) + 1);
+            string strTemp = strCalculation.Substring(intTemp);
+            strCalculation = strCalculation.Remove(intTemp);
+            return string.Format("((Y){0}*(Y){0})", strTemp);
         }
 
         public void calculationVarType(equationTypes x)
@@ -225,7 +339,7 @@ namespace ItViteaRekenmachine01
         public string stringToCode(string str)
         {
             string strBase =
-                @"
+                @"  using System;
             namespace Base
             {
                 public class MathConverter
@@ -239,14 +353,15 @@ namespace ItViteaRekenmachine01
             }
                         ";
             //Put actual calculation string in place of Placeholder + alter str to proper syntax
-            if (str.Contains(","))
-                str = str.Replace(",", ".");
-            if (str.Contains("€"))
-                str = str.Replace("€", "");
+            //Now Ans is separate from display , to . and removing € should not be necessary?
+            //if (str.Contains(","))
+                //str = str.Replace(",", ".");
+            //if (str.Contains("€"))
+              //  str = str.Replace("€", "");
+
             strBase = strBase.Replace("Placeholder", str);
             strBase = strBase.Replace("VarX", strVarX);
             strBase = strBase.Replace("(Y)", strVarY);
-
             return strBase;
         }
     }

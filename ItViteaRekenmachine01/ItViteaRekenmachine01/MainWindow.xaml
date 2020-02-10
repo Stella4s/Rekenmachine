@@ -19,12 +19,20 @@
             <Setter Property="FontSize" Value="30"/>
         </Style>
 
-        <Style TargetType="Label">
+        <Style x:Key="DisplayStyle" TargetType="Label">
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="VerticalAlignment" Value="Stretch" />
             <Setter Property="Background" Value="Gainsboro"/>
             <Setter Property="Foreground" Value="Black"/>
-            <Setter Property="FontSize" Value="50"/>
+            <Setter Property="FontSize" Value="52"/>
+        </Style>
+        <Style x:Key="SettingStyle" TargetType="Label">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Padding" Value="5,0"/>
+            <Setter Property="FontSize" Value="25"/>
+            <Setter Property="FontWeight" Value="Medium"/>
         </Style>
 
 
@@ -49,21 +57,22 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
 
-        <Label x:Name="DisplayTop" Content=""  Grid.Row="0" Grid.ColumnSpan="4" Margin="0,5,0,0" ScrollViewer.CanContentScroll ="True" ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
-        <Label x:Name="DisplayBtm" Content=""  Grid.Row="1" Grid.ColumnSpan="4" Margin="0,0,0,5" HorizontalContentAlignment="Right"/>
+        <Label x:Name="DisplayTop" Content=""  Grid.Row="0" Grid.ColumnSpan="4" Margin="0,5,0,0" ScrollViewer.CanContentScroll ="True" ScrollViewer.HorizontalScrollBarVisibility="Auto" FontSize="50" Padding="5,12,5,5" Style="{DynamicResource DisplayStyle}"/>
+        <Label x:Name="DisplayEur" Content="€" Grid.Row="0" Grid.Column="4"     Margin="0,5,0,0" HorizontalContentAlignment="Right" Style="{DynamicResource SettingStyle}" Opacity="0"/>
+        <Label x:Name="DisplayBtm" Content=""  Grid.Row="1" Grid.ColumnSpan="4" Margin="0,0,0,5" HorizontalContentAlignment="Right" Style="{DynamicResource DisplayStyle}"/>
 
-        <Button x:Name="ButtonClearEntry" Content="CE"   Grid.Row="2"  Click="Button_Click" Style="{DynamicResource ButtonStyle}"/>
-        <Button x:Name="ButtonClear" Content="C"         Grid.Row="2"  Click="Button_Click" Grid.Column="1"  Style="{DynamicResource ButtonStyle}"/>
-        <Button x:Name="ButtonUndo" Content="&#x232b;"   Grid.Row="2"  Click="Button_Click" Grid.Column="2" Style="{DynamicResource ButtonSymbolsStyle}" Grid.ColumnSpan="2"/>
+        <Button x:Name="ButtonClearAll" Content="CA"   Grid.Row="2"  Click="Button_ClearAll" Style="{DynamicResource ButtonStyle}"/>
+        <Button x:Name="ButtonClear" Content="C"         Grid.Row="2"  Click="Button_Clear" Grid.Column="1"  Style="{DynamicResource ButtonStyle}"/>
+        <Button x:Name="ButtonUndo" Content="&#x232b;"   Grid.Row="2"  Click="Button_Undo" Grid.Column="2" Style="{DynamicResource ButtonSymbolsStyle}" Grid.ColumnSpan="2"/>
 
         <Button x:Name="ButtonBracketL" Content="("      Grid.Row="3"  Click="Button_ClickNumber" Style="{DynamicResource ButtonStyle}" />
         <Button x:Name="ButtonBracketR" Content=")"      Grid.Row="3"  Click="Button_ClickNumber" Grid.Column="1"  Style="{DynamicResource ButtonStyle}" />
         <Button x:Name="ButtonEuro" Content="€"          Grid.Row="3"  Click="Button_ClickEuro" Grid.Column="2" Style="{DynamicResource ButtonStyle}" />
         <Button x:Name="ButtonPerc" Content="%"          Grid.Row="3"  Click="Button_ClickPerc" Grid.Column="3" Style="{DynamicResource ButtonSymbolsStyle}"/>
 
-        <Button x:Name="ButtonNegative" Content="+/-"    Grid.Row="4"  Click="Button_Click" Style="{DynamicResource ButtonStyle}" />
-        <Button x:Name="ButtonSqr" Content="x&#178;"     Grid.Row="4"  Click="Button_Click" Grid.Column="1"  Style="{DynamicResource ButtonStyle}" />
-        <Button x:Name="ButtonRoot" Content="&#x221A;"   Grid.Row="4"  Click="Button_Click" Grid.Column="2" Style="{DynamicResource ButtonSymbolsStyle}" />
+        <Button x:Name="ButtonNegative" Content="+/-"    Grid.Row="4"  Click="Button_Neg" Style="{DynamicResource ButtonStyle}" />
+        <Button x:Name="ButtonSqr" Content="x&#178;"     Grid.Row="4"  Click="Button_Pow" Grid.Column="1"  Style="{DynamicResource ButtonStyle}" />
+        <Button x:Name="ButtonRoot" Content="&#x221A;"   Grid.Row="4"  Click="Button_Root" Grid.Column="2" Style="{DynamicResource ButtonSymbolsStyle}" />
         <Button x:Name="ButtonDivide" Content="&#xf7;"   Grid.Row="4"  Click="Button_ClickDiv" Grid.Column="3" Style="{DynamicResource ButtonSymbolsStyle}" />
 
 
