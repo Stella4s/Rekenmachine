@@ -29,6 +29,7 @@ namespace ItViteaRekenmachine01
         - Make Sqrt and Pow work. [Done]
         - Euro, Procent en Decimal buttons. [Done]
         - Make +/- button work. [Done]
+        - Made Root, Pow and Perc buttons work through 1 button and add a letter that will later be converted to the appropriate math when the strCalculation is send to the converter. [Done]
 
         - Fix undo button. (It messes up when attempting to undo one char whilst Percent, Pow and Sqrt add longer strings.)
         - Have try-catch methods for faulty input by user. (e.g. Dividing by zero, Straight up faulty syntax, etc.)
@@ -99,15 +100,8 @@ namespace ItViteaRekenmachine01
             Button sendButton = e.Source as Button;
             checkAns();
             sqrtActive();
-            calculationVarType(equationTypes.Double);
+            calculationVarType(EquationTypes.Double);
             addToStrAndDisplay("/", sendButton.Content.ToString());
-        }
-        private void Button_ClickPerc(object sender, RoutedEventArgs e)
-        {
-            Button sendButton = e.Source as Button;
-            checkAns();
-            calculationVarType(equationTypes.Double);
-            addToStrAndDisplay(equationBuildPercent(), sendButton.Content.ToString());
         }
         private void Button_ClickEuro(object sender, RoutedEventArgs e)
         {
@@ -120,7 +114,7 @@ namespace ItViteaRekenmachine01
             {
                 DisplayEur.Opacity = 0.9;
                 boolEuro = true;
-                calculationVarType(equationTypes.Double);
+                calculationVarType(EquationTypes.Double);
             }
             //addToStrAndDisplay("", sendButton.Content.ToString());
         }
@@ -140,22 +134,30 @@ namespace ItViteaRekenmachine01
                 boolAns = true;
             }
         }
-        private void Button_Pow(object sender, RoutedEventArgs e)
+        private void Button_RPM(object sender, RoutedEventArgs e)
         {
             Button sendButton = e.Source as Button;
+            string strForCalc ="", strForDisplay =""; 
+            string strButtonName = sendButton.Name.ToString();
+            if (strButtonName == "ButtonPow")
+            {
+                strForCalc = "M";
+                strForDisplay = sendButton.Content.ToString().Substring(1);
+            }
+            else if (strButtonName == "ButtonPerc")
+            {
+                calculationVarType(EquationTypes.Double);
+                strForCalc = "P";
+                strForDisplay = "%";
+            }
+            else if (strButtonName == "ButtonRoot")
+            {
+                calculationVarType(EquationTypes.Double);
+                strForCalc = "R";
+                strForDisplay = sendButton.Content.ToString();
+            }
             checkAns();
-            sqrtActive();
-            calculationVarType(equationTypes.Double);
-            addToStrAndDisplay(equationPowerBuild(), sendButton.Content.ToString().Substring(1));
-        }
-        private void Button_Root(object sender, RoutedEventArgs e)
-        {
-            Button sendButton = e.Source as Button;
-            checkAns();
-            sqrtActive();
-            calculationVarType(equationTypes.Double);
-            addToStrAndDisplay("Math.Sqrt((Y)", sendButton.Content.ToString());
-            boolSqrtActive = true;
+            addToStrAndDisplay(strForCalc, strForDisplay);
         }
         private void Button_ClickDot(object sender, RoutedEventArgs e)
         {
@@ -233,7 +235,7 @@ namespace ItViteaRekenmachine01
         {
             if (strCalculation.Contains("."))
             {
-                calculationVarType(equationTypes.Double);
+                calculationVarType(EquationTypes.Double);
             }
         }
         private void sqrtActive()
@@ -275,69 +277,10 @@ namespace ItViteaRekenmachine01
             strReturn= objB.ToString();
             return strReturn;
         }
- 
-        
-
-
-
-
-
-
-        //String formatting/building methods.
-        //Variables for string building.
-        string strVarX = "int", strVarY ="", strSymbols = "+-*/()";
-
-       
-
-        public string equationBuildPercent()
-        {
-            char[] chrSymbols = strSymbols.ToCharArray();
-            int intTemp = (strCalculation.LastIndexOfAny(chrSymbols) + 1);
-            string strTemp = strCalculation.Substring(intTemp);
-            strCalculation = strCalculation.Remove(intTemp);
-            return string.Format("((Y){0} / (Y)100)", strTemp);
-        }
-        private string equationPowerBuild()
-        {
-            char[] chrSymbols = strSymbols.ToCharArray();
-            int intTemp = (strCalculation.LastIndexOfAny(chrSymbols) + 1);
-            string strTemp = strCalculation.Substring(intTemp);
-            strCalculation = strCalculation.Remove(intTemp);
-            return string.Format("((Y){0}*(Y){0})", strTemp);
-        }
-
-        public void calculationVarType(equationTypes x)
-        {
-            switch (x)
-            {
-                case equationTypes.Double:
-                    strVarX = "double"; strVarY = "(double)";
-                    break;
-                case equationTypes.Macht:
-                    break;
-                case equationTypes.Root:
-                    break;
-                //case equationTypes.Euro:
-                   // break;
-                case equationTypes.Reset:
-                    strVarX = "int"; strVarY = "";
-                    break;
-                default:
-                    strVarX = "int"; strVarY ="";
-                    break;
-            }
-        }
-        public enum equationTypes
-        {
-            Double,
-            Macht,
-            Root,
-            //Euro,
-            Reset
-        }
-
+        //String building methods.
         public string stringToCode(string str)
         {
+            str = BuildRPM(str);
             string strBase =
                 @"  using System;
             namespace Base
@@ -355,14 +298,98 @@ namespace ItViteaRekenmachine01
             //Put actual calculation string in place of Placeholder + alter str to proper syntax
             //Now Ans is separate from display , to . and removing € should not be necessary?
             //if (str.Contains(","))
-                //str = str.Replace(",", ".");
+            //str = str.Replace(",", ".");
             //if (str.Contains("€"))
-              //  str = str.Replace("€", "");
+            //  str = str.Replace("€", "");
 
             strBase = strBase.Replace("Placeholder", str);
             strBase = strBase.Replace("VarX", strVarX);
             strBase = strBase.Replace("(Y)", strVarY);
             return strBase;
+        }
+        //Variables for string building.
+        //Root = R Percent = P Power/Macht = M
+        string strVarX = "int", strVarY ="", strSymbols = "+-*/", strSubstitudeLetters = "RPM";
+
+
+        //String builder for when support stringToCode.
+        public string BuildRPM(string str)
+        {
+            char[] chrSymbols = strSymbols.ToCharArray();
+            char[] chrSubstitude = strSubstitudeLetters.ToCharArray();
+
+            int strStart, strIndex, strEnd;
+            strEnd = str.Length;
+            strStart = 0; strIndex = 0;
+
+            while ((strStart <= strEnd) && (strIndex > -1))
+            {
+                string strInsert, strTemp, strLetter;
+                strIndex = str.IndexOfAny(chrSubstitude, strStart);
+                if (strIndex == -1) break;            //If non of the substitude letters are found break out of the while loop.
+                strLetter = str.Substring(strIndex);  //Find which substitude letter is present.
+
+                if (strLetter == "R")
+                {
+                    /*Starting at strIndex, find first chrSymbols. Substring starts one after strIndex and length is lenght till chrSymbols -1.
+                        e.g. R25+5  counts from R, to + which is 3. Substring starts at 0+1=1 and is 3-1=2 long.
+                    */
+                    int intTemp = str.IndexOfAny(chrSymbols, strIndex) - 1;
+                    strTemp = str.Substring((strIndex + 1), intTemp);
+                    strInsert = "Math.Sqrt((Y){0})";
+                }
+                else
+                {
+                    /*Starting at strIndex, go backwards till chrSymbol is found.
+                    Substring starts from chrSymbol + 1 and is strIndex - intTemp long.
+                        
+                    e.g. 5+50P; P = strIndex = 4; intTemp+1 = 1+1 = 2;  Substring starts at 5 = index 2; And is 4-2 = 2 char long.
+
+                    Depending on strLetter a different strInsert is used.
+                    e.g. strTemp + strLetter = 50P; 50P is replaced by ((Y){0}/ (Y)100); Formatting to ((Y)50 / (Y)100);
+                    */
+                    int intTemp = str.LastIndexOfAny(chrSymbols, strIndex) + 1;
+                    strTemp = str.Substring(intTemp, (strIndex - intTemp));
+                    if (strLetter == "P")
+                        strInsert = "((Y){0} / (Y)100)";
+                    else
+                        strInsert = "((Y){0}*(Y){0})";
+                }
+                str = str.Replace((strTemp + strLetter), strInsert);
+                str = string.Format(str, strTemp);
+                strStart = strIndex + 1;
+            }
+            return str;
+        }
+
+        public void calculationVarType(EquationTypes x)
+        {
+            switch (x)
+            {
+                case EquationTypes.Double:
+                    strVarX = "double"; strVarY = "(double)";
+                    break;
+                case EquationTypes.Macht:
+                    break;
+                case EquationTypes.Root:
+                    break;
+                //case equationTypes.Euro:
+                   // break;
+                case EquationTypes.Reset:
+                    strVarX = "int"; strVarY = "";
+                    break;
+                default:
+                    strVarX = "int"; strVarY ="";
+                    break;
+            }
+        }
+        public enum EquationTypes
+        {
+            Double,
+            Macht,
+            Root,
+            //Euro,
+            Reset
         }
     }
 }
