@@ -30,21 +30,25 @@ namespace ItViteaRekenmachine01
         - Euro, Procent en Decimal buttons. [Done]
         - Make +/- button work. [Done]
         - Made Root, Pow and Perc buttons work through 1 button and add a letter that will later be converted to the appropriate math when the strCalculation is send to the converter. [Done]
+        - Fix Ans, decide when it'll add Ans onto the calculation and when it won't.
+        - Fix undo button. (It messes up when attempting to undo one char whilst Percent, Pow and Sqrt add longer strings.) [Done]? More testing needed.
 
-        - Fix undo button. (It messes up when attempting to undo one char whilst Percent, Pow and Sqrt add longer strings.)
         - Have try-catch methods for faulty input by user. (e.g. Dividing by zero, Straight up faulty syntax, etc.)
         - Clean-up code. Limit amount of different methods, try streamline process.
 
-        - Suggested changes.
+        - More complex changes.
+            [Done]
             - Make Sqrt, Pow and Perc strings be included AFTER = is pressed. Using singular 1 char symbols in base string. (So Undo will work.)
             And replacing said symbols before putting the string into the compiler.
             Would also make the boolSqrtActive way of solving the bracket issue with using math.sqrt obsolete, cleaning up code in the process.
 
+            [In progress]
             - Find a way to condense and simplify the amount of button methods?
             Make multiple buttons hook up to one button method. And have that method send the buttonname? To a switch method who changes the variables put in depending on the button name.
             Reducing the amount of repeat code. (Button sendbutton, addToStrAndDisplay, checkAns, sqrtActive, Checkdouble.)
 
-            - Streamline enums and equation types. 
+            [Done]
+            - Streamline enums and equation types.
             Either remove enums altogether and work with a single bool to switch between int and double.
             Or use the enum equation types and the switch, to switch between variable types depending on the size of the calculation.
             The enums don't seem to be needed, nor the switch. (As only two options are used.) So likely remove this altogether.
@@ -54,7 +58,7 @@ namespace ItViteaRekenmachine01
             */
         //Declaring Variables.
         string strCalculation, strDisplayTop, strDisplayBtm, strAns;
-        bool boolAns, boolClear, boolEuro = false, boolSqrtActive;
+        bool boolAns, boolEuro = false;
 
         public MainWindow()
         {
@@ -80,7 +84,6 @@ namespace ItViteaRekenmachine01
         {
             Button sendButton = e.Source as Button;
             checkAns();
-            sqrtActive();
             addToStrAndDisplay(sendButton.Content.ToString());
         }
    
@@ -92,15 +95,12 @@ namespace ItViteaRekenmachine01
         {
             Button sendButton = e.Source as Button;
             checkAns();
-            sqrtActive();
             addToStrAndDisplay("*", sendButton.Content.ToString());
         }
         private void Button_ClickDiv(object sender, RoutedEventArgs e)
         {
             Button sendButton = e.Source as Button;
             checkAns();
-            sqrtActive();
-            calculationVarType(EquationTypes.Double);
             addToStrAndDisplay("/", sendButton.Content.ToString());
         }
         private void Button_ClickEuro(object sender, RoutedEventArgs e)
@@ -114,16 +114,13 @@ namespace ItViteaRekenmachine01
             {
                 DisplayEur.Opacity = 0.9;
                 boolEuro = true;
-                calculationVarType(EquationTypes.Double);
             }
-            //addToStrAndDisplay("", sendButton.Content.ToString());
         }
         private void Button_Neg(object sender, RoutedEventArgs e)
         {
             if (String.IsNullOrEmpty(strAns)) { }
             else
             {
-                needsDouble();
                 strAns += "*-1";
                 strAns = Compiler(strAns);
                 if (boolEuro)
@@ -146,13 +143,11 @@ namespace ItViteaRekenmachine01
             }
             else if (strButtonName == "ButtonPerc")
             {
-                calculationVarType(EquationTypes.Double);
                 strForCalc = "P";
                 strForDisplay = "%";
             }
             else if (strButtonName == "ButtonRoot")
             {
-                calculationVarType(EquationTypes.Double);
                 strForCalc = "R";
                 strForDisplay = sendButton.Content.ToString();
             }
@@ -189,14 +184,11 @@ namespace ItViteaRekenmachine01
                 DisplayTop.Content = strDisplayTop;
             }
         }
-
         private void Button_ClickResult(object sender, RoutedEventArgs e)
         {
             if (String.IsNullOrEmpty(strCalculation)) { }
             else
             {
-                needsDouble();
-                sqrtActive();
                 strAns = Compiler(strCalculation);
                 if (boolEuro)
                     strDisplayBtm = String.Format("{0:C2}", Convert.ToDouble(strAns));
@@ -231,21 +223,6 @@ namespace ItViteaRekenmachine01
             strDisplayTop += strDisplay;
             DisplayTop.Content = strDisplayTop;
         }
-        public void needsDouble()
-        {
-            if (strCalculation.Contains("."))
-            {
-                calculationVarType(EquationTypes.Double);
-            }
-        }
-        private void sqrtActive()
-        {
-            if (boolSqrtActive)
-            {
-                strCalculation += ")";
-                boolSqrtActive = false;
-            }
-        }
         private void clear()
         {
             strCalculation = "";
@@ -266,7 +243,7 @@ namespace ItViteaRekenmachine01
                 GenerateExecutable = false
             };
 
-            CompilerResults results = codeProvider.CompileAssemblyFromSource(compParams, stringToCode(str));
+            CompilerResults results = codeProvider.CompileAssemblyFromSource(compParams, StringToCode(str));
 
             if (results.Errors.Count != 0)
                 throw new Exception("Compiling failed!");
@@ -278,8 +255,12 @@ namespace ItViteaRekenmachine01
             return strReturn;
         }
         //String building methods.
-        public string stringToCode(string str)
+        public string StringToCode(string str)
         {
+            //For when ans includes a "," which needs to be an "." Instead of constantly checking Ans seperately the entire strCalc is checked once before conversion.
+            if (str.Contains(","))
+            str = str.Replace(",", ".");
+            EquationTypeCheck(str);
             str = BuildRPM(str);
             string strBase =
                 @"  using System;
@@ -296,28 +277,36 @@ namespace ItViteaRekenmachine01
             }
                         ";
             //Put actual calculation string in place of Placeholder + alter str to proper syntax
-            //Now Ans is separate from display , to . and removing € should not be necessary?
-            //if (str.Contains(","))
-            //str = str.Replace(",", ".");
-            //if (str.Contains("€"))
-            //  str = str.Replace("€", "");
-
             strBase = strBase.Replace("Placeholder", str);
             strBase = strBase.Replace("VarX", strVarX);
             strBase = strBase.Replace("(Y)", strVarY);
             return strBase;
         }
+        //Variable to use with enum CalculationType switch.
+        EquationTypes equationType;
+        char[] chrNeedsDoubleSymbols = {'.','/','R', 'P', 'M'};
+
+        //To check the equation type and use the switch in stringToCode before any str actually reaches the compiler. Instead of each button having to set the equationType seperately.
+        public void EquationTypeCheck(string str)
+        {
+            if (boolEuro)
+                equationType = EquationTypes.Euro;
+            else if (str.IndexOfAny(chrNeedsDoubleSymbols) != -1)
+                equationType = EquationTypes.Double;
+            else
+                equationType = EquationTypes.Int;
+
+            EquationTypeSwitch(equationType);
+        }
         //Variables for string building.
         //Root = R Percent = P Power/Macht = M
-        string strVarX = "int", strVarY ="", strSymbols = "+-*/", strSubstitudeLetters = "RPM";
+        string strVarX = "int", strVarY = "";
+        char[] chrSymbols = { '+', '-', '*', '/' };
+        char[] chrSubstitude = {'R', 'P', 'M'};
 
-
-        //String builder for when support stringToCode.
+        //String builder for support stringToCode.
         public string BuildRPM(string str)
         {
-            char[] chrSymbols = strSymbols.ToCharArray();
-            char[] chrSubstitude = strSubstitudeLetters.ToCharArray();
-
             int strStart, strIndex, strEnd;
             strEnd = str.Length;
             strStart = 0; strIndex = 0;
@@ -327,16 +316,21 @@ namespace ItViteaRekenmachine01
                 string strInsert, strTemp, strLetter;
                 strIndex = str.IndexOfAny(chrSubstitude, strStart);
                 if (strIndex == -1) break;            //If non of the substitude letters are found break out of the while loop.
-                strLetter = str.Substring(strIndex);  //Find which substitude letter is present.
+                strLetter = str.Substring(strIndex, 1);  //Find which substitude letter is present.
 
                 if (strLetter == "R")
                 {
                     /*Starting at strIndex, find first chrSymbols. Substring starts one after strIndex and length is lenght till chrSymbols -1.
                         e.g. R25+5  counts from R, to + which is 3. Substring starts at 0+1=1 and is 3-1=2 long.
+                    If no chrSymbols are found then likely the equation is something like R25 in which the substring goes from 2 to the end of the string.
                     */
-                    int intTemp = str.IndexOfAny(chrSymbols, strIndex) - 1;
-                    strTemp = str.Substring((strIndex + 1), intTemp);
+                    int intTemp = str.IndexOfAny(chrSymbols, strIndex);
+                    if (intTemp == -1)
+                        strTemp = str.Substring(strIndex + 1);
+                    else
+                        strTemp = str.Substring((strIndex + 1), (intTemp - 1));
                     strInsert = "Math.Sqrt((Y){0})";
+                    str = str.Replace((strLetter + strTemp), strInsert);
                 }
                 else
                 {
@@ -354,29 +348,26 @@ namespace ItViteaRekenmachine01
                         strInsert = "((Y){0} / (Y)100)";
                     else
                         strInsert = "((Y){0}*(Y){0})";
+                    str = str.Replace((strTemp + strLetter), strInsert);
                 }
-                str = str.Replace((strTemp + strLetter), strInsert);
                 str = string.Format(str, strTemp);
                 strStart = strIndex + 1;
             }
             return str;
         }
 
-        public void calculationVarType(EquationTypes x)
+        public void EquationTypeSwitch(EquationTypes x)
         {
             switch (x)
             {
                 case EquationTypes.Double:
                     strVarX = "double"; strVarY = "(double)";
                     break;
-                case EquationTypes.Macht:
+                case EquationTypes.Euro:
+                    strVarX = "double"; strVarY = "(double)";
                     break;
-                case EquationTypes.Root:
-                    break;
-                //case equationTypes.Euro:
-                   // break;
-                case EquationTypes.Reset:
-                    strVarX = "int"; strVarY = "";
+                case EquationTypes.Int:
+                    strVarX = "int"; strVarY = "(int)";
                     break;
                 default:
                     strVarX = "int"; strVarY ="";
@@ -386,10 +377,8 @@ namespace ItViteaRekenmachine01
         public enum EquationTypes
         {
             Double,
-            Macht,
-            Root,
-            //Euro,
-            Reset
+            Euro,
+            Int
         }
     }
 }
