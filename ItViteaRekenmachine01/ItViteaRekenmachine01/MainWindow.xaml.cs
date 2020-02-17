@@ -27,23 +27,25 @@ namespace ItViteaRekenmachine01
         - Fix Ans. [Done] 
         - Fix undo button. [Done]
         - Investigate and fix issue. Using root seems to mess up how ANS works. [Done] (Forgot to add ans to StrCalc which only send R instead of RAns)
-        - Fix Brackets with RPM. [Done] RPM builder now probably works with brackets and brackets within brackets.
+        - Fix Brackets with RPM. [Done]
+        - Add something to handle the E + 20 when numbers start getting really big or really small. [Done]
+        - Make top display scroll as more numbers are added.
 
 
-        - Have try-catch methods for faulty input by user. (e.g. Dividing by zero, Straight up faulty syntax, etc.)
+        - Have ways of handling faulty input by user. (e.g. Dividing by zero, Straight up faulty syntax, etc.) [In progress]
 
         - More complex changes.
             - Clean-up code. Limit amount of different methods + make more efficient.
                 - Declared the compiler outside of compiler method, so it will only need to be called once.
 
-            - Find a way to condense and simplify the amount of button methods. [In progress]
+            - Find a way to condense and simplify the amount of button methods. [Done]
                     - Put all the simple Operator buttons under the same method. (*+-/)
                     - Added the , operator under numbers method + made it so if pressed whilst screen is clear it'll automatically add 0,.
                     - Put ALL operators included RPM under one method.
         */
         //Declaring Variables.
-        string strCalculation, strDisplayTop, strDisplayBtm, strAns;
-        bool boolAns = false, boolResult = false, boolClear = true, boolEuro = false;
+        string strCalculation, strDisplayTop, strDisplayBtm, strAns, strError;
+        bool boolAns = false, boolResult = false, boolClear = true, boolEuro = false, boolError = false;
 
         public MainWindow()
         {
@@ -183,13 +185,27 @@ namespace ItViteaRekenmachine01
             else
             {
                 strAns = ResultCompiler(strCalculation);
-                if (boolEuro)
-                    strDisplayBtm = String.Format("{0:C2}", Convert.ToDouble(strAns));
+                if (boolError)
+                {
+                    strDisplayBtm = strError;
+                    boolAns = false;
+                    boolError = false;
+                }
                 else
-                    strDisplayBtm = strAns;
-                DisplayBtm.Content = strDisplayBtm;
-                boolAns = true;
+                {
+                    if (boolEuro)
+                    {
+                        strAns = Math.Round(Convert.ToDouble(strAns), 2).ToString();
+                        strDisplayBtm = String.Format("{0:C2}", Convert.ToDouble(strAns));
+                    }
+                    else
+                        strDisplayBtm = strAns;
+                    if (strAns.IndexOf("E") != -1)
+                        strAns = String.Format("({0})", strAns);
+                    boolAns = true;
+                }
                 boolResult = true;
+                DisplayBtm.Content = strDisplayBtm;
             }
         }
         
@@ -238,22 +254,46 @@ namespace ItViteaRekenmachine01
         public string ResultCompiler(string str)
         {
             string strReturn;
+
             CompilerResults results = codeProvider.CompileAssemblyFromSource(compParams, StringToCode(str));
+            
 
             if (results.Errors.Count != 0)
             {
-                // Compilation produces errors. Print out each error.
-                string strErrorMessage = "Listing errors from compilation:";
+                boolError = true;
+                strError = "Undetermined Error";
+                strReturn = "";
+
+                string strErrorMessage = "";
                 for (int i = 0; i < results.Errors.Count; i++)
+                {
                     strErrorMessage += ("\n" + results.Errors[i].ToString());
+                    if (results.Errors[i].ErrorNumber == "CS1525")
+                        strError = "Syntax Error";
+                }
 
-                throw new Exception("Compiling failed!" + strErrorMessage);
+                // Compilation produces errors. Print out each error.
+                //string strErrorMessage = "Listing errors from compilation:";
+                //for (int i = 0; i < results.Errors.Count; i++)
+                //    strErrorMessage += ("\n" + results.Errors[i].ToString());
+
+                //throw new Exception("Compiling failed!" + strErrorMessage + strError);
             }
+            else
+            {
+                object objA = results.CompiledAssembly.CreateInstance("Base.MathConverter");
+                MethodInfo metInfo = objA.GetType().GetMethod("ReturnCalculation");
 
-            object objA = results.CompiledAssembly.CreateInstance("Base.MathConverter");
-            MethodInfo metInfo = objA.GetType().GetMethod("ReturnCalculation");
-            object objB = metInfo.Invoke(objA, null);
-            strReturn= objB.ToString();
+                object objB = metInfo.Invoke(objA, null);
+                if (objB.ToString() == "∞")
+                {
+                    boolError = true;
+                    strError = "Math Error";
+                    strReturn = "";
+                }
+                else
+                    strReturn = objB.ToString(); 
+            }
             return strReturn;
         }
         //String building methods. Which aid in building/changing the string to be compiled.
@@ -272,8 +312,8 @@ namespace ItViteaRekenmachine01
                 {
                     public VarX ReturnCalculation()
                     {
-                        VarX varTemp = (Y)Placeholder;
-                        return varTemp;
+                            VarX varTemp = (Y)Placeholder;
+                            return varTemp;
                     }
                 }
             }
@@ -288,7 +328,7 @@ namespace ItViteaRekenmachine01
         //Root = R Percent = P Power/Macht = M
         string strVarX = "int", strVarY = "";
         char[] chrSymbols = { '+', '-', '*', '/' , ')', '('};
-        char[] chrSubstitude = {'R', 'P', 'M'};
+        char[] chrSubstitude = {'R', 'P', 'M', 'E'};
 
         //String builder for support stringToCode. Which replaces R, P and M with the appropriate equations.
         public string BuildRPM(string str)
@@ -305,7 +345,7 @@ namespace ItViteaRekenmachine01
                 if (intIndex == -1) break;            //If non of the substitude letters are found break out of the while loop.
                 strLetter = str.Substring(intIndex, 1);  //Find which substitude letter is present.
 
-                if (strLetter == "R")
+                if (strLetter == "R" || strLetter == "E")
                 {
                     /* If brackets are involved counts from the ( bracket until there is an even amount of closing and opening brackets.
                   Then takes everything between the outest () as strTemp.
@@ -333,6 +373,28 @@ namespace ItViteaRekenmachine01
                             }
                         }
                         strTemp = str.Substring(intIndex + 1, at - intIndex);
+                        strInsert = "Math.Sqrt((Y){0})";
+                    }
+                    else if (strLetter == "E")
+                    {
+                        string strTempB;
+                        int intTemp = str.IndexOfAny(chrSymbols, (intIndex + 1));
+                        int intTempB = str.IndexOfAny(chrSymbols, intTemp + 1);
+
+                        if (intTemp == -1 || intTempB == -1)
+                            strTemp = str.Substring(intIndex + 1);
+                        else
+                            strTemp = str.Substring((intIndex + 1), (intTempB - intTemp));
+
+                        if (intTempB == -1)
+                            strTempB = str.Substring(intTemp + 1);
+                        else
+                            strTempB = str.Substring((intTemp + 1), (intTempB - (intTemp + 1)));
+
+                        if (str.Substring(intTemp, 1) == "-")
+                            strInsert = String.Format(" * Math.Pow(10, -{0})", strTempB);
+                        else
+                            strInsert = String.Format(" * Math.Pow(10, {0})", strTempB);
                     }
                     /*Starting at strIndex, find first chrSymbols. Substring starts one after strIndex and length is lenght till chrSymbols -1.
                         e.g. R25+5  counts from R, to + which is 3. Substring starts at 0+1=1 and is 3-1=2 long.
@@ -345,8 +407,10 @@ namespace ItViteaRekenmachine01
                             strTemp = str.Substring(intIndex + 1);
                         else
                             strTemp = str.Substring((intIndex + 1), (intTemp - 1));
+
+                        strInsert = "Math.Sqrt((Y){0})";
                     }
-                    strInsert = "Math.Sqrt((Y){0})";
+
                     str = str.Replace((strLetter + strTemp), strInsert);
                 }
                 else
@@ -406,7 +470,7 @@ namespace ItViteaRekenmachine01
         }
         //Variable to use with enum CalculationType switch.
         EquationTypes equationType;
-        char[] chrNeedsDoubleSymbols = { '.', '/', 'R', 'P', 'M' };
+        char[] chrNeedsDoubleSymbols = { '.', '/', 'R', 'P', 'M' , 'E'};
 
         //To check the equation type and use the switch in stringToCode before any str actually reaches the compiler. Instead of each button having to set the equationType seperately.
         public void EquationTypeCheck(string str)
