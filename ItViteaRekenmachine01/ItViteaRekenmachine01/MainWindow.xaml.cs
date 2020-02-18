@@ -23,26 +23,6 @@ namespace ItViteaRekenmachine01
     /// </summary>
     public partial class MainWindow : Window
     {
-        /*Todo:
-        - Fix Ans. [Done] 
-        - Fix undo button. [Done]
-        - Investigate and fix issue. Using root seems to mess up how ANS works. [Done] (Forgot to add ans to StrCalc which only send R instead of RAns)
-        - Fix Brackets with RPM. [Done]
-        - Add something to handle the E + 20 when numbers start getting really big or really small. [Done]
-        - Make top display scroll as more numbers are added.
-
-
-        - Have ways of handling faulty input by user. (e.g. Dividing by zero, Straight up faulty syntax, etc.) [In progress]
-
-        - More complex changes.
-            - Clean-up code. Limit amount of different methods + make more efficient.
-                - Declared the compiler outside of compiler method, so it will only need to be called once.
-
-            - Find a way to condense and simplify the amount of button methods. [Done]
-                    - Put all the simple Operator buttons under the same method. (*+-/)
-                    - Added the , operator under numbers method + made it so if pressed whilst screen is clear it'll automatically add 0,.
-                    - Put ALL operators included RPM under one method.
-        */
         //Declaring Variables.
         string strCalculation, strDisplayTop, strDisplayBtm, strAns, strError;
         bool boolAns = false, boolResult = false, boolClear = true, boolEuro = false, boolError = false;
@@ -52,10 +32,6 @@ namespace ItViteaRekenmachine01
             InitializeComponent();
         }
         //Buttton methods
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
         private void Button_Numbers(object sender, RoutedEventArgs e)
         {
             Button sendButton = e.Source as Button;
@@ -176,7 +152,7 @@ namespace ItViteaRekenmachine01
                 strCalculation = strCalculation.Remove(intTemp);
                 intTemp = (strDisplayTop.Length) - 1;
                 strDisplayTop  = strDisplayTop.Remove(intTemp);
-                DisplayTop.Content = strDisplayTop;
+                DisplayTop.Text = strDisplayTop;
             }
         }
         private void Button_ClickResult(object sender, RoutedEventArgs e)
@@ -225,21 +201,21 @@ namespace ItViteaRekenmachine01
             boolClear = false;
             strCalculation += strCalc;
             strDisplayTop += strCalc;
-            DisplayTop.Content = strDisplayTop;
+            DisplayTop.Text = strDisplayTop;
         }
         private void AddToStrAndDisplay(string strCalc, string strDisplay)
         {
             boolClear = false;
             strCalculation += strCalc;
             strDisplayTop += strDisplay;
-            DisplayTop.Content = strDisplayTop;
+            DisplayTop.Text = strDisplayTop;
         }
         private void Clear()
         {
             boolClear = true;
             strCalculation = "";
             strDisplayTop = "";
-            DisplayTop.Content = strDisplayTop;
+            DisplayTop.Text = strDisplayTop;
         }
 
         //Declare compiler. (This way it only needs to be declared once, not over and over each time the Compiler method is called.)
@@ -271,13 +247,6 @@ namespace ItViteaRekenmachine01
                     if (results.Errors[i].ErrorNumber == "CS1525")
                         strError = "Syntax Error";
                 }
-
-                // Compilation produces errors. Print out each error.
-                //string strErrorMessage = "Listing errors from compilation:";
-                //for (int i = 0; i < results.Errors.Count; i++)
-                //    strErrorMessage += ("\n" + results.Errors[i].ToString());
-
-                //throw new Exception("Compiling failed!" + strErrorMessage + strError);
             }
             else
             {
@@ -327,6 +296,12 @@ namespace ItViteaRekenmachine01
         //Variables for string building.
         //Root = R Percent = P Power/Macht = M
         string strVarX = "int", strVarY = "";
+
+        private void ColumnDefinition_RequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)
+        {
+
+        }
+
         char[] chrSymbols = { '+', '-', '*', '/' , ')', '('};
         char[] chrSubstitude = {'R', 'P', 'M', 'E'};
 
